@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-mac-classic:
+  build-ms-dos:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/volkertb/debian-djgpp
