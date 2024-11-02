@@ -37,7 +37,7 @@ const cc_result ReturnCode_SocketDropped    = WSAECONNRESET;
 
 const char* Platform_AppNameSuffix = "";
 cc_bool Platform_ReadonlyFilesystem;
-cc_bool Platform_SingleProcess;
+cc_bool Platform_SingleProcess = true;
 #define UWP_STRING(str) ((wchar_t*)(str)->uni)
 
 /*########################################################################################################################*
@@ -136,6 +136,61 @@ cc_uint64 Stopwatch_Measure(void) {
 		GetSystemTimeAsFileTime(&ft);
 		return (cc_uint64)ft.dwLowDateTime | ((cc_uint64)ft.dwHighDateTime << 32);
 	}
+}
+
+
+/*########################################################################################################################*
+*-------------------------------------------------------Crash handling----------------------------------------------------*
+*#########################################################################################################################*/
+static const char* ExceptionDescribe(cc_uint32 code) {
+	switch (code) {
+	case EXCEPTION_ACCESS_VIOLATION:    return "ACCESS_VIOLATION";
+	case EXCEPTION_ILLEGAL_INSTRUCTION: return "ILLEGAL_INSTRUCTION";
+	case EXCEPTION_INT_DIVIDE_BY_ZERO:  return "DIVIDE_BY_ZERO";
+	}
+	return NULL;
+}
+
+static LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info) {
+	cc_string msg; char msgBuffer[128 + 1];
+	const char* desc;
+	cc_uint32 code;
+	cc_uintptr addr;
+
+	code =  (cc_uint32)info->ExceptionRecord->ExceptionCode;
+	addr = (cc_uintptr)info->ExceptionRecord->ExceptionAddress;
+	desc = ExceptionDescribe(code);
+
+	String_InitArray_NT(msg, msgBuffer);
+	if (desc) {
+		String_Format2(&msg, "Unhandled %c error at %x", desc, &addr);
+	} else {
+		String_Format2(&msg, "Unhandled exception 0x%h at %x", &code, &addr);
+	}
+
+	DWORD numArgs = info->ExceptionRecord->NumberParameters;
+	if (numArgs) {
+		numArgs = min(numArgs, EXCEPTION_MAXIMUM_PARAMETERS);
+		String_AppendConst(&msg, " [");
+
+		for (DWORD i = 0; i < numArgs; i++) 
+		{
+			String_Format1(&msg, "0x%x,", &info->ExceptionRecord->ExceptionInformation[i]);
+		}
+		String_Append(&msg, ']');
+	}
+
+	msg.buffer[msg.length] = '\0';
+	Logger_DoAbort(0, msg.buffer, info->ContextRecord);
+	return EXCEPTION_EXECUTE_HANDLER; /* TODO: different flag */
+}
+
+void CrashHandler_Install(void) {
+	SetUnhandledExceptionFilter(UnhandledFilter);
+}
+
+void Process_Abort2(cc_result result, const char* raw_msg) {
+	Logger_DoAbort(result, raw_msg, NULL);
 }
 
 
@@ -744,46 +799,8 @@ cc_result Platform_GetEntropy(void* data, int len) {
 /*########################################################################################################################*
 *-----------------------------------------------------Configuration-------------------------------------------------------*
 *#########################################################################################################################*/
-static cc_string Platform_NextArg(STRING_REF cc_string* args) {
-	cc_string arg;
-	int end;
-
-	/* get rid of leading spaces before arg */
-	while (args->length && args->buffer[0] == ' ') {
-		*args = String_UNSAFE_SubstringAt(args, 1);
-	}
-
-	if (args->length && args->buffer[0] == '"') {
-		/* "xy za" is used for arg with spaces */
-		*args = String_UNSAFE_SubstringAt(args, 1);
-		end = String_IndexOf(args, '"');
-	} else {
-		end = String_IndexOf(args, ' ');
-	}
-
-	if (end == -1) {
-		arg   = *args;
-		args->length = 0;
-	} else {
-		arg   = String_UNSAFE_Substring(args, 0, end);
-		*args = String_UNSAFE_SubstringAt(args, end + 1);
-	}
-	return arg;
-}
-
 int Platform_GetCommandLineArgs(int argc, STRING_REF char** argv, cc_string* args) {
-	cc_string cmdArgs = String_FromReadonly(GetCommandLineA());
-	int i;
-	Platform_NextArg(&cmdArgs); /* skip exe path */
-	if (gameHasArgs) return GetGameArgs(args);
-
-	for (i = 0; i < GAME_MAX_CMDARGS; i++) 
-	{
-		args[i] = Platform_NextArg(&cmdArgs);
-
-		if (!args[i].length) break;
-	}
-	return i;
+	return GetGameArgs(args);
 }
 
 cc_result Platform_SetDefaultCurrentDirectory(int argc, char** argv) {

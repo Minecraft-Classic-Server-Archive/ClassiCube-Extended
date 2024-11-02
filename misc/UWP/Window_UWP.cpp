@@ -1,5 +1,6 @@
 #include "../../src/Core.h"
 
+#include <winrt/Windows.ApplicationModel.DataTransfer.h>
 #include <winrt/Windows.ApplicationModel.h>
 #include <winrt/Windows.ApplicationModel.Core.h>
 #include <winrt/Windows.ApplicationModel.Activation.h>
@@ -13,6 +14,7 @@
 using namespace winrt;
 using namespace Windows::ApplicationModel;
 using namespace Windows::ApplicationModel::Core;
+using namespace Windows::ApplicationModel::DataTransfer;
 using namespace Windows::ApplicationModel::Activation;
 using namespace Windows::Devices::Input;
 using namespace Windows::Graphics::Display;
@@ -27,6 +29,8 @@ using namespace Windows::UI::Input;
 #include "../../src/Bitmap.h"
 #include "../../src/Options.h"
 #include "../../src/Errors.h"
+#include "../../src/Graphics.h"
+#define UWP_STRING(str) ((wchar_t*)(str)->uni)
 
 
 /*########################################################################################################################*
@@ -37,6 +41,7 @@ void Window_PreInit(void) {
 }
 
 void Window_Init(void) {
+	CoreWindow& window = CoreWindow::GetForCurrentThread();
 	Input.Sources = INPUT_SOURCE_NORMAL;
 
 	DisplayInfo.Width  = 640;
@@ -44,6 +49,14 @@ void Window_Init(void) {
 	DisplayInfo.Depth  = 32;
 	DisplayInfo.ScaleX = 1.0f;
 	DisplayInfo.ScaleY = 1.0f;
+
+	Rect bounds = window.Bounds();
+
+	WindowInfo.UIScaleX = DEFAULT_UI_SCALE_X;
+	WindowInfo.UIScaleY = DEFAULT_UI_SCALE_Y;
+	WindowInfo.Width    = bounds.Width;
+	WindowInfo.Height   = bounds.Height;
+	WindowInfo.Exists   = true;
 }
 
 void Window_Free(void) { }
@@ -58,9 +71,18 @@ void Window_SetTitle(const cc_string* title) {
 }
 
 void Clipboard_GetText(cc_string* value) {
+	DataPackageView content = Clipboard::GetContent();
+	hstring str = content.GetTextAsync().get();
 }
 
 void Clipboard_SetText(const cc_string* value) {
+	cc_winstring raw;
+	Platform_EncodeString(&raw, value);
+	auto str = hstring(UWP_STRING(&raw));
+
+	DataPackage package = DataPackage();
+	package.SetText(str);
+	Clipboard::SetContent(package);
 }
 
 int Window_GetWindowState(void) {
@@ -88,6 +110,10 @@ void Window_RequestClose(void) {
 }
 
 void Window_ProcessEvents(float delta) {
+	CoreWindow& window = CoreWindow::GetForCurrentThread();
+
+	CoreDispatcher& dispatcher = window.Dispatcher();
+	dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
 }
 
 void Gamepads_Init(void) {
@@ -97,11 +123,18 @@ void Gamepads_Init(void) {
 void Gamepads_Process(float delta) { }
 
 static void Cursor_GetRawPos(int* x, int* y) {
-	*x = 0;
-	*y = 0;
+	CoreWindow& window = CoreWindow::GetForCurrentThread();
+
+	Point point = window.PointerPosition();
+	*x = point.X;
+	*y = point.Y;
 }
 
-void Cursor_SetPosition(int x, int y) { 
+void Cursor_SetPosition(int x, int y) {
+	CoreWindow& window = CoreWindow::GetForCurrentThread();
+
+	Point point = Point(x, y);
+	window.PointerPosition(point);
 }
 
 static void Cursor_DoSetVisible(cc_bool visible) {
@@ -159,17 +192,56 @@ cc_result Window_SaveFileDialog(const struct SaveFileDialogArgs* args) {
 	return OpenSaveFileDialog(&filters, args->Callback, false, fileExts, &args->defaultName);
 }
 
+static GfxResourceID fb_tex, fb_vb;
+static void AllocateVB(void) {
+	struct VertexTextured* data = (struct VertexTextured*)Gfx_RecreateAndLockVb(&fb_vb,
+															VERTEX_FORMAT_TEXTURED, 4);
+	data[0].x = -1.0f; data[0].y = -1.0f; data[0].z = 0.0f; data[0].Col = PACKEDCOL_WHITE; data[0].U = 0.0f; data[0].V = 1.0f;
+	data[1].x =  1.0f; data[1].y = -1.0f; data[1].z = 0.0f; data[1].Col = PACKEDCOL_WHITE; data[1].U = 1.0f; data[1].V = 1.0f;
+	data[2].x =  1.0f; data[2].y =  1.0f; data[2].z = 0.0f; data[2].Col = PACKEDCOL_WHITE; data[2].U = 1.0f; data[2].V = 0.0f;
+	data[3].x = -1.0f; data[3].y =  1.0f; data[3].z = 0.0f; data[3].Col = PACKEDCOL_WHITE; data[3].U = 0.0f; data[2].V = 0.0f;
+
+	Gfx_UnlockVb(fb_vb);
+}
+
 void Window_AllocFramebuffer(struct Bitmap* bmp, int width, int height) {
 	bmp->scan0  = (BitmapCol*)Mem_Alloc(width * height, BITMAPCOLOR_SIZE, "bitmap");
 	bmp->width  = width;
 	bmp->height = height;
+
+	if (!Gfx.Created) Gfx_Create();
+	fb_tex = Gfx_CreateTexture(bmp, TEXTURE_FLAG_NONPOW2, false);
+	AllocateVB();
 }
 
 void Window_DrawFramebuffer(Rect2D r, struct Bitmap* bmp) {
+	struct Bitmap part;
+	part.scan0  = Bitmap_GetRow(bmp, r.y) + r.x;
+	part.width  = r.width;
+	part.height = r.height;
+
+	Gfx_BeginFrame();
+	Gfx_BindIb(Gfx.DefaultIb);
+	Gfx_UpdateTexture(fb_tex, r.x, r.y, &part, bmp->width, false);
+
+	Gfx_LoadMatrix(MATRIX_VIEW, &Matrix_Identity);
+	Gfx_LoadMatrix(MATRIX_PROJ, &Matrix_Identity);
+	Gfx_SetDepthTest(false);
+	Gfx_SetAlphaTest(false);
+	Gfx_SetAlphaBlending(false);
+
+	Gfx_SetVertexFormat(VERTEX_FORMAT_COLOURED);
+	Gfx_SetVertexFormat(VERTEX_FORMAT_TEXTURED);
+	Gfx_BindTexture(fb_tex);
+	Gfx_BindVb(fb_vb);
+	Gfx_DrawVb_IndexedTris(4);
+	Gfx_EndFrame();
 }
 
 void Window_FreeFramebuffer(struct Bitmap* bmp) {
 	Mem_Free(bmp->scan0);
+	Gfx_DeleteTexture(&fb_tex);
+	Gfx_DeleteVb(&fb_vb);
 }
 
 static cc_bool rawMouseInited, rawMouseSupported;
@@ -209,8 +281,15 @@ void OpenFileDialog(void) {
     //Windows::Storage::StorageFile file = picker->PickSingleFileAsync();
 }
 
-struct CCApp : implements<CCApp, IFrameworkView>
+struct CCApp : implements<CCApp, IFrameworkViewSource, IFrameworkView>
 {
+
+	// IFrameworkViewSource interface
+	IFrameworkView CreateView()
+	{
+		return *this;
+	}
+
 	// IFrameworkView interface
 	void Initialize(CoreApplicationView const& view)
     {
@@ -227,10 +306,11 @@ struct CCApp : implements<CCApp, IFrameworkView>
     void Run()
     {
         CoreWindow& window = CoreWindow::GetForCurrentThread();
-        window.Activate();
+		window.Activate();
+		Window_Main.Handle.ptr = get_abi(window);
 
-        CoreDispatcher& dispatcher = window.Dispatcher();
-        dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
+		extern int main(int argc, char** argv);
+		main(0, NULL);
     }
 
     void SetWindow(CoreWindow const& win)
@@ -238,15 +318,8 @@ struct CCApp : implements<CCApp, IFrameworkView>
     }
 };
 
-struct CCAppSource : implements<CCAppSource, IFrameworkViewSource> 
-{
-	IFrameworkView CreateView() {
-		return make<CCApp>();
-	}
-};
-
 int __stdcall wWinMain(void*, void*, wchar_t** argv, int argc)
 {
-	auto app = make<CCAppSource>();
+	auto app = make<CCApp>();
     CoreApplication::Run(app);
 }
