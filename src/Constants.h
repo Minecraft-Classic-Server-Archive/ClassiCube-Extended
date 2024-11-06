@@ -15,7 +15,11 @@ Copyright 2014-2023 ClassiCube | Licensed under BSD-3
 #define GAME_APP_TITLE "ClassiCube"
 #else
 #define GAME_APP_NAME  "ClassiCube 1.3.7"
+#if defined TESTING_BLOCKS
+#define GAME_APP_TITLE "ClassiCube 1.3.7 (Extended)"
+#else
 #define GAME_APP_TITLE "ClassiCube 1.3.7"
+#endif
 #endif
 
 /* Max number of characters strings can have. */
@@ -66,7 +70,6 @@ enum SKIN_TYPE { SKIN_64x32, SKIN_64x64, SKIN_64x64_SLIM, SKIN_INVALID = 0xF0 };
 #define UInt16_MaxValue ((cc_uint16)65535)
 #define Int32_MinValue  ((cc_int32)-2147483647L - (cc_int32)1L)
 #define Int32_MaxValue  ((cc_int32)2147483647L)
-
 #define SKINS_SERVER    "http://cdn.classicube.net/skin"
 #define UPDATES_SERVER  "http://cdn.classicube.net/client"
 #define SERVICES_SERVER "https://www.classicube.net/api"

@@ -3,10 +3,7 @@ name: Build latest (Windows)
 on:
   push:
     branches:
-      - main
       - master
-      - ModernLighting
-      - AngledLighting
   workflow_dispatch:
 
 concurrency:
@@ -44,7 +41,7 @@ jobs:
       - uses: ./.github/actions/notify_failure
         if: ${{ always() && steps.compile.outcome == 'failure' }}
         with:
-          NOTIFY_MESSAGE: 'Failed to compile 32 bit Windows build'
+          NOTIFY_MESSAGE: 'Failed to compile 32 bit ClassiCube Windows build! '
           WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
           
           
@@ -76,8 +73,8 @@ jobs:
       - uses: ./.github/actions/notify_success
         if: ${{ always() && steps.compile.outcome == 'success' }}
         with:
-          DESTINATION_URL: '${{ secrets.NOTIFY_URL }}'
-          WORKFLOW_NAME: 'win32'
+          NOTIFY_MESSAGE: 'Successfully compiled 32 bit ClassiCube Windows builds.'
+          WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
           
           
 #============================================
@@ -107,7 +104,7 @@ jobs:
       - uses: ./.github/actions/notify_failure
         if: ${{ always() && steps.compile.outcome == 'failure' }}
         with:
-          NOTIFY_MESSAGE: 'Failed to compile 64 bit Windows build'
+          NOTIFY_MESSAGE: 'Failed to compile 64 bit ClassiCube Windows build! '
           WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
           
           
@@ -133,5 +130,5 @@ jobs:
       - uses: ./.github/actions/notify_success
         if: ${{ always() && steps.compile.outcome == 'success' }}
         with:
-          DESTINATION_URL: '${{ secrets.NOTIFY_URL }}'
-          WORKFLOW_NAME: 'win64'
+          NOTIFY_MESSAGE: 'Successfully compiled 64 bit ClassiCube Windows builds.'
+          WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'

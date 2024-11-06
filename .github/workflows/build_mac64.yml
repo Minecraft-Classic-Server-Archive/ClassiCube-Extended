@@ -38,7 +38,7 @@ jobs:
       - uses: ./.github/actions/notify_failure
         if: ${{ always() && steps.compile.outcome == 'failure' }}
         with:
-          NOTIFY_MESSAGE: 'Failed to compile 64 bit macOS builds'
+          NOTIFY_MESSAGE: 'Failed to compile 64 bit ClassiCube macOS builds! '
           WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
           
    
@@ -64,5 +64,5 @@ jobs:
       - uses: ./.github/actions/notify_success
         if: ${{ always() && steps.compile.outcome == 'success' }}
         with:
-          DESTINATION_URL: '${{ secrets.NOTIFY_URL }}'
-          WORKFLOW_NAME: 'mac64'
+          NOTIFY_MESSAGE: 'Successfully compiled 64 bit ClassiCube macOS builds.'
+          WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'

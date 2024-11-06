@@ -13,14 +13,13 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macOS-13
+    runs-on: macOS-12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
       - name: Compile iOS build
         id: compile
         run: |
-          cd misc/ios
-          sudo xcode-select -s /Applications/Xcode_14.1.app/Contents/Developer
+          cd ios
           xcodebuild -sdk iphoneos -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
           cd build/Release-iphoneos
           mkdir Payload
@@ -30,18 +29,18 @@ jobs:
       - uses: ./.github/actions/notify_failure
         if: ${{ always() && steps.compile.outcome == 'failure' }}
         with:
-          NOTIFY_MESSAGE: 'Failed to compile iOS build'
+          NOTIFY_MESSAGE: 'Failed to compile ClassiCube iOS build! '
           WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
           
       - uses: ./.github/actions/upload_build
         if: ${{ always() && steps.compile.outcome == 'success' }}
         with:
-          SOURCE_FILE: 'misc/ios/build/Release-iphoneos/cc.ipa'
-          DEST_NAME: 'cc.ipa'
+          SOURCE_FILE: 'ios/build/Release-iphoneos/cc.ipa'
+          DEST_NAME: 'ClassiCube.ipa'
           
           
       - uses: ./.github/actions/notify_success
         if: ${{ always() && steps.compile.outcome == 'success' }}
         with:
-          DESTINATION_URL: '${{ secrets.NOTIFY_URL }}'
-          WORKFLOW_NAME: 'ios'
+          NOTIFY_MESSAGE: 'Successfully compiled ClassiCube iOS build.'
+          WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'

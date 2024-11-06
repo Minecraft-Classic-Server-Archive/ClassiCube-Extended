@@ -81,8 +81,9 @@ enum BLOCKID {
 	BLOCK_MAX_ORIGINAL = BLOCK_OBSIDIAN,
 	/* Max block ID used in original classic plus CPE blocks. */
 	BLOCK_MAX_CPE = BLOCK_STONE_BRICK,
-
-#if defined EXTENDED_BLOCKS
+#if defined TESTING_BLOCKS
+	BLOCK_MAX_DEFINED = 0x3FF,
+#elif defined EXTENDED_BLOCKS
 	BLOCK_MAX_DEFINED = 0x2FF,
 #elif defined CC_BUILD_TINYMEM
 	BLOCK_MAX_DEFINED = BLOCK_MAX_CPE,

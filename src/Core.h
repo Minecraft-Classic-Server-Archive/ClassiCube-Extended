@@ -548,17 +548,16 @@ typedef cc_uint8  cc_bool;
 #endif
 #ifndef CC_BUILD_LOWMEM
 #define EXTENDED_BLOCKS
+#define TESTING_BLOCKS
 #endif
 #ifndef CC_BUILD_TINYMEM
 #define EXTENDED_TEXTURES
 #endif
-
 #ifdef EXTENDED_BLOCKS
 typedef cc_uint16 BlockID;
 #else
 typedef cc_uint8 BlockID;
 #endif
-
 #ifdef EXTENDED_TEXTURES
 typedef cc_uint16 TextureLoc;
 #else
@@ -589,7 +588,8 @@ typedef void* GfxResourceID;
 /* Contains the information to describe a 2D textured quad. */
 struct Texture {
 	GfxResourceID ID;
-	short x, y; cc_uint16 width, height;
+	short x, y; 
+	cc_uint16 width, height;
 	TextureRec uv;
 };
 

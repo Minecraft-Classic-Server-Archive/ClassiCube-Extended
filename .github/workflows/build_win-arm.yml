@@ -37,7 +37,7 @@ jobs:
       - uses: ./.github/actions/notify_failure
         if: ${{ always() && steps.compile.outcome == 'failure' }}
         with:
-          NOTIFY_MESSAGE: 'Failed to compile 32 bit Windows build'
+          NOTIFY_MESSAGE: 'Failed to compile 32 bit ClassiCube Windows ARM build '
           WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
           
       - uses: ./.github/actions/upload_build
@@ -45,6 +45,13 @@ jobs:
         with:
           SOURCE_FILE: 'src/cc-arm32-d3d11.exe'
           DEST_NAME: 'ClassiCube-arm32-Direct3D11.exe'
+
+      - uses: ./.github/actions/notify_success
+        if: ${{ always() && steps.compile.outcome == 'success' }}
+        with:
+          NOTIFY_MESSAGE: 'Successfully compiled 32 bit ClassiCube Windows ARM builds.'
+          WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
+
 #============================================
 # ============== ARM64 WINDOWS ==============
 # ===========================================
@@ -70,7 +77,7 @@ jobs:
       - uses: ./.github/actions/notify_failure
         if: ${{ always() && steps.compile.outcome == 'failure' }}
         with:
-          NOTIFY_MESSAGE: 'Failed to compile 64 bit Windows build'
+          NOTIFY_MESSAGE: 'Failed to compile 64 bit ClassiCube Windows ARM build'
           WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
           
       - uses: ./.github/actions/upload_build
@@ -78,3 +85,9 @@ jobs:
         with:
           SOURCE_FILE: 'src/cc-arm64-d3d11.exe'
           DEST_NAME: 'ClassiCube-arm64-Direct3D11.exe'
+
+      - uses: ./.github/actions/notify_success
+        if: ${{ always() && steps.compile.outcome == 'success' }}
+        with:
+          NOTIFY_MESSAGE: 'Successfully compiled 64 bit ClassiCube Windows ARM builds.'
+          WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'

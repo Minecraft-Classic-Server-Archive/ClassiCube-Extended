@@ -30,7 +30,7 @@ jobs:
       - uses: ./.github/actions/notify_failure
         if: ${{ always() && steps.compile.outcome == 'failure' }}
         with:
-          NOTIFY_MESSAGE: 'Failed to compile Haiku build'
+          NOTIFY_MESSAGE: 'Failed to compile ClassiCube Haiku build! '
           WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'
           
           
@@ -44,5 +44,5 @@ jobs:
       - uses: ./.github/actions/notify_success
         if: ${{ always() && steps.compile.outcome == 'success' }}
         with:
-          DESTINATION_URL: '${{ secrets.NOTIFY_URL }}'
-          WORKFLOW_NAME: 'haiku'
+          NOTIFY_MESSAGE: 'Successfully compiled ClassiCube Haiku build.'
+          WEBHOOK_URL: '${{ secrets.WEBHOOK_URL }}'

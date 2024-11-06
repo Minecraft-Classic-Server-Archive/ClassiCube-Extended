@@ -94,7 +94,8 @@ static struct CpeExt
 	lightingMode_Ext    = { "LightingMode", 1 },
 	cinematicGui_Ext   = { "CinematicGui", 1 },
 	extTextures_Ext     = { "ExtendedTextures", 1 },
-	extBlocks_Ext       = { "ExtendedBlocks", 1 };
+	extBlocks_Ext       = { "ExtendedBlocks", 1 },
+	extBlocks_Ext2 = { "ExtendedBlocks", 2 };
 
 static struct CpeExt* cpe_clientExtensions[] = {
 	&clickDist_Ext, &customBlocks_Ext, &heldBlock_Ext, &emoteFix_Ext, &textHotKey_Ext, &extPlayerList_Ext,
@@ -111,6 +112,9 @@ static struct CpeExt* cpe_clientExtensions[] = {
 #endif
 #ifdef EXTENDED_BLOCKS
 	&extBlocks_Ext,
+#endif
+#ifdef TESTING_BLOCKS
+	&extBlocks_Ext2,
 #endif
 }; 
 #define IsSupported(ext) (ext.serverVersion > 0)
