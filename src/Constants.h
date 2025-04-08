@@ -14,11 +14,12 @@ Copyright 2014-2023 ClassiCube | Licensed under BSD-3
 #define GAME_APP_NAME  "ClassiCube 1.3.7 web"
 #define GAME_APP_TITLE "ClassiCube"
 #else
-#define GAME_APP_NAME  "ClassiCube 1.3.7"
 #if defined TESTING_BLOCKS
 #define GAME_APP_TITLE "ClassiCube 1.3.7 (Extended)"
+#define GAME_APP_NAME  "ClassiCube 1.3.7 (Extended)"
 #else
 #define GAME_APP_TITLE "ClassiCube 1.3.7"
+#define GAME_APP_NAME  "ClassiCube 1.3.7"
 #endif
 #endif
 

@@ -369,11 +369,13 @@ static void DisconnectReadFailed(cc_result res) {
 
 static void DisconnectInvalidOpcode(cc_uint8 opcode) {
 	static const cc_string title = String_FromConst("Disconnected");
-	cc_string tmp; char tmpBuffer[STRING_SIZE];
+	cc_string tmp; 
+	char tmpBuffer[STRING_SIZE];
 	String_InitArray(tmp, tmpBuffer);
-
 	String_Format2(&tmp, "Server sent invalid packet %b! (prev %b)", &opcode, &lastOpcode);
-	Game_Disconnect(&title, &tmp); return;
+	//Game_Disconnect(&title, &tmp); 
+	Chat_AddOf(&tmp, MSG_TYPE_NORMAL);
+	//return;
 }
 
 static void MPConnection_Tick(struct ScheduledTask* task) {

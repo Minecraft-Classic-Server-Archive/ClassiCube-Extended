@@ -368,7 +368,9 @@ static void DisconnectInvalidMap(cc_result res) {
 	String_InitArray(tmp, tmpBuffer);
 
 	String_Format1(&tmp, "Server sent corrupted map data (error %e)", &res);
-	Game_Disconnect(&title, &tmp); return;
+	Chat_AddOf(&tmp, MSG_TYPE_NORMAL);
+	//Game_Disconnect(&title, &tmp); 
+	//return;
 }
 
 static void MapState_Init(struct MapState* m) {
@@ -752,8 +754,12 @@ static void Classic_Message(cc_uint8* data) {
 
 static void Classic_Kick(cc_uint8* data) {
 	static const cc_string title = String_FromConst("&eLost connection to the server");
+	cc_string tmp; char tmpBuffer[STRING_SIZE];
+	String_InitArray(tmp, tmpBuffer);
 	cc_string reason = UNSAFE_GetString(data);
-	Game_Disconnect(&title, &reason);
+	String_Format1(&tmp, "Lost connection to server: %e", &reason);
+	//Game_Disconnect(&title, &reason);
+	Chat_AddOf(&reason, MSG_TYPE_NORMAL);
 }
 
 static void Classic_SetPermission(cc_uint8* data) {

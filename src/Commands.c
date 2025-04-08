@@ -159,7 +159,25 @@ static struct ChatCommand HelpCommand = {
 		"&eDisplays the help for the given command.",
 	}
 };
+#include "Menus.h"
+static void TexturesCommand_Execute(const cc_string* args, int argsCount) {
+	struct Screen* s = Gui_GetScreen(GUI_PRIORITY_TEXIDS);
+	if (s) {
+		Gui_Remove(s);
+	}
+	else {
+		TexIdsOverlay_Show();
+	}
+}
 
+static struct ChatCommand TexturesCommand = {
+	"Textures", TexturesCommand_Execute,
+	COMMAND_FLAG_UNSPLIT_ARGS,
+	{
+		"&a/client textures",
+		"&eDisplays texture ID reference sheet.",
+	}
+};
 static void GpuInfoCommand_Execute(const cc_string* args, int argsCount) {
 	char buffer[7 * STRING_SIZE];
 	cc_string str, line;
@@ -809,6 +827,7 @@ static void OnInit(void) {
 	Commands_Register(&BlockEditCommand);
 	Commands_Register(&CuboidCommand);
 	Commands_Register(&ReplaceCommand);
+	Commands_Register(&TexturesCommand);
 }
 
 static void OnFree(void) {

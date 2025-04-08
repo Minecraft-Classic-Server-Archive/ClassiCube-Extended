@@ -553,10 +553,14 @@ typedef cc_uint8  cc_bool;
 #ifndef CC_BUILD_TINYMEM
 #define EXTENDED_TEXTURES
 #endif
+#if defined TESTING_BLOCKS
+typedef cc_uint32 BlockID;
+#elif
 #ifdef EXTENDED_BLOCKS
 typedef cc_uint16 BlockID;
 #else
 typedef cc_uint8 BlockID;
+#endif
 #endif
 #ifdef EXTENDED_TEXTURES
 typedef cc_uint16 TextureLoc;
